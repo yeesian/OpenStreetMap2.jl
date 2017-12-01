@@ -42,6 +42,7 @@ using Base.Test
         @test length(pg.dense.denseinfo.timestamp) == 8000
         @test length(pg.dense.denseinfo.user_sid) == 8000
         @test length(pg.dense.keys_vals) == 22678
+        @test sum(pg.dense.keys_vals .== 0) == 8000
     end
 end
 
@@ -87,5 +88,6 @@ end
         @test length(pg.dense.denseinfo.timestamp) == 8000
         @test length(pg.dense.denseinfo.user_sid) == 8000
         @test length(pg.dense.keys_vals) == 28716
+        @test sum(pg.dense.keys_vals .== 0) == 8000
     end
 end
