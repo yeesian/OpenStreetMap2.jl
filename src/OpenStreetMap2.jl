@@ -19,7 +19,7 @@ module OpenStreetMap2
         nodeid::Dict{Int,Int} # osm_id -> node_id
         nodes::OSMNodes # Vector{(osm_id, lon, lat) ... (osm_id, lon, lat)}
         ways::Dict{Int,Vector{Int}} # osm_id -> way
-        relations::Dict{Int,Vector{Dict{String,String}}} # osm_id -> relations
+        relations::Dict{Int,Dict{String,Any}} # osm_id -> relations
         tags::Dict{Int,Dict{String,String}} # osm_id -> tags
 
         OSMData() = new(
@@ -57,27 +57,65 @@ module OpenStreetMap2
     end
 
     function processblock!(osmdata::OSMData, pb::OSMPBF.PrimitiveBlock)
+        getstr(i) = transcode(String,pb.stringtable.s[i+1])
+        membertype(i) = if i == 0; :Node elseif i == 1; :Way else; :Relation end
         for pg in pb.primitivegroup
             if isdefined(pg, :dense)
-                append!(osmdata.nodes.id, cumsum(pg.dense.id))
+                osmids = cumsum(pg.dense.id)
+                append!(osmdata.nodes.id, osmids)
                 append!(osmdata.nodes.lon,
                     1e-9 * (pb.lon_offset .+ (pb.granularity .* cumsum(pg.dense.lon)))
                 )
                 append!(osmdata.nodes.lat,
                     1e-9 * (pb.lat_offset .+ (pb.granularity .* cumsum(pg.dense.lat)))
                 )
+                let i = 1, j = 1
+                    @assert pg.dense.keys_vals[end] == 0
+                    while j <= length(pg.dense.keys_vals)
+                        k = pg.dense.keys_vals[j]
+                        if k == 0 # end of current node
+                            i += 1; j += 1
+                        else
+                            @assert j < length(pg.dense.keys_vals)
+                            v = pg.dense.keys_vals[j+1]
+                            id = osmids[i]
+                            osmdata.tags[id] = get(osmdata.tags, id, Dict())
+                            osmdata.tags[id][getstr(k)] = getstr(v)
+                            j += 2
+                        end
+                    end
+                end
             end
             for n in pg.nodes
                 push!(osmdata.nodes.id, n.id)
                 push!(osmdata.nodes.lon, n.lon)
                 push!(osmdata.nodes.lat, n.lat)
+                @assert length(n.keys) == length(n.vals)
+                osmdata.tags[n.id] = get(osmdata.tags, n.id, Dict())
+                for (k,v) in zip(n.keys, n.vals)
+                    osmdata.tags[n.id][getstr(k)] = getstr(v)
+                end
             end
             merge!(osmdata.nodeid, Dict(zip(
                 osmdata.nodes.id, 1:length(osmdata.nodes.id)
             )))
-            for w in pg.ways; osmdata.ways[w.id] = cumsum(w.refs) end
+            for w in pg.ways
+                osmdata.ways[w.id] = cumsum(w.refs)
+                osmdata.tags[w.id] = get(osmdata.tags, w.id, Dict())
+                for (k,v) in zip(w.keys, w.vals)
+                    osmdata.tags[w.id][getstr(k)] = getstr(v)
+                end
+            end
             for r in pg.relations
-                # process r
+                osmdata.relations[r.id] = Dict(
+                    "id" => cumsum(r.memids),
+                    "type" => membertype.(r.types),
+                    "role" => getstr.(r.roles_sid)
+                )
+                osmdata.tags[r.id] = get(osmdata.tags, r.id, Dict())
+                for (k,v) in zip(r.keys, r.vals)
+                    osmdata.tags[r.id][getstr(k)] = getstr(v)
+                end
             end
         end
     end
