@@ -24,6 +24,7 @@ function processblock!(osmdata::OSMData, pb::OSMPBF.PrimitiveBlock)
     getstr(i) = transcode(String,pb.stringtable.s[i+1])
     membertype(i) = if i == 0; :Node elseif i == 1; :Way else; :Relation end
     for pg in pb.primitivegroup
+        # process dense
         if isdefined(pg, :dense)
             osmids = cumsum(pg.dense.id)
             append!(osmdata.nodes.id, osmids)
@@ -50,6 +51,7 @@ function processblock!(osmdata::OSMData, pb::OSMPBF.PrimitiveBlock)
                 end
             end
         end
+        # process nodes
         for n in pg.nodes
             push!(osmdata.nodes.id, n.id)
             push!(osmdata.nodes.lon, n.lon)
@@ -63,6 +65,7 @@ function processblock!(osmdata::OSMData, pb::OSMPBF.PrimitiveBlock)
         merge!(osmdata.nodeid, Dict(zip(
             osmdata.nodes.id, 1:length(osmdata.nodes.id)
         )))
+        # process ways
         for w in pg.ways
             osmdata.ways[w.id] = cumsum(w.refs)
             osmdata.tags[w.id] = get(osmdata.tags, w.id, Dict())
@@ -70,6 +73,7 @@ function processblock!(osmdata::OSMData, pb::OSMPBF.PrimitiveBlock)
                 osmdata.tags[w.id][getstr(k)] = getstr(v)
             end
         end
+        # process relations
         for r in pg.relations
             osmdata.relations[r.id] = Dict(
                 "id" => cumsum(r.memids),
