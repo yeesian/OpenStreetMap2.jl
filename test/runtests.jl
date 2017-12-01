@@ -20,7 +20,6 @@ using Base.Test
         primitives = maldives_osm.primitives
         @test length(primitives) == 24
         @test primitives[1].date_granularity == 1000
-        @test primitives[1].date_granularity == 1000
         @test primitives[1].granularity == 100
         @test primitives[1].lat_offset == 0
         @test primitives[1].lon_offset == 0
@@ -65,7 +64,6 @@ end
     @testset "Testing PrimitiveBlocks" begin
         primitives = maldives_osh.primitives
         @test length(primitives) == 37
-        @test primitives[1].date_granularity == 1000
         @test primitives[1].date_granularity == 1000
         @test primitives[1].granularity == 100
         @test primitives[1].lat_offset == 0
