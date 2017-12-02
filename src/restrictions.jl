@@ -7,16 +7,20 @@
 # 
 # https://en.wikipedia.org/wiki/Wikipedia:Copyrights
 
-# Interpretation
-# * `yes` - this kind of vehicle is allowed to drive on this kind of road unless
-#     tagged otherwise on the individual way (e.g. "motorcar=no").
-# * `designated` - same as yes but this road can optionally be preferred by some
-#     of your metrics.
-# * `no` - this kind of vehicle is not allowed to drive on this kind of road
-#     unless tagged otherwise on the individual way (e.g. "motorcar=yes").
+"""
+Default-Access-Restriction for all countries
 
-# Default-Access-Restriction for all countries.
+with "street", "track", and "service" introduced as `:yes` for all modes.
+Individual regions can provide their own access restriction dictionaries.
 
+### Interpretation
+* `yes` - this kind of vehicle is allowed to drive on this kind of road unless
+    tagged otherwise on the individual way (e.g. "motorcar=no").
+* `designated` - same as yes but this road can optionally be preferred by some
+    of your metrics.
+* `no` - this kind of vehicle is not allowed to drive on this kind of road
+    unless tagged otherwise on the individual way (e.g. "motorcar=yes").
+"""
 const ACCESS_RESTRICTION = Dict(
     "access" => Dict(
         "motorway" => :yes,
@@ -32,6 +36,9 @@ const ACCESS_RESTRICTION = Dict(
         "unclassified" => :yes,
         "residential" => :yes,
         "living_street" => :yes,
+        "street" => :yes,
+        "track" => :yes,
+        "service" => :yes,
         "road" => :yes,
         "pedestrian" => :no,
         "path" => :no,
@@ -53,6 +60,9 @@ const ACCESS_RESTRICTION = Dict(
         "unclassified" => :yes,
         "residential" => :yes,
         "living_street" => :yes,
+        "street" => :yes,
+        "track" => :yes,
+        "service" => :yes,
         "road" => :yes,
         "pedestrian" => :no,
         "path" => :no,
@@ -74,6 +84,9 @@ const ACCESS_RESTRICTION = Dict(
         "unclassified" => :yes,
         "residential" => :yes,
         "living_street" => :yes,
+        "street" => :yes,
+        "track" => :yes,
+        "service" => :yes,
         "road" => :yes,
         "pedestrian" => :no,
         "path" => :no,
@@ -95,6 +108,9 @@ const ACCESS_RESTRICTION = Dict(
         "unclassified" => :yes,
         "residential" => :yes,
         "living_street" => :yes,
+        "street" => :yes,
+        "track" => :yes,
+        "service" => :yes,
         "road" => :yes,
         "pedestrian" => :no,
         "path" => :no,
@@ -116,6 +132,9 @@ const ACCESS_RESTRICTION = Dict(
         "unclassified" => :yes,
         "residential" => :yes,
         "living_street" => :yes,
+        "street" => :yes,
+        "track" => :yes,
+        "service" => :yes,
         "road" => :yes,
         "pedestrian" => :no,
         "path" => :no,
@@ -137,6 +156,9 @@ const ACCESS_RESTRICTION = Dict(
         "unclassified" => :yes,
         "residential" => :yes,
         "living_street" => :yes,
+        "street" => :yes,
+        "track" => :yes,
+        "service" => :yes,
         "road" => :yes,
         "pedestrian" => :no,
         "path" => :no,
@@ -158,6 +180,9 @@ const ACCESS_RESTRICTION = Dict(
         "unclassified" => :yes,
         "residential" => :yes,
         "living_street" => :yes,
+        "street" => :yes,
+        "track" => :yes,
+        "service" => :yes,
         "road" => :yes,
         "pedestrian" => :no,
         "path" => :no,
@@ -179,6 +204,9 @@ const ACCESS_RESTRICTION = Dict(
         "unclassified" => :yes,
         "residential" => :yes,
         "living_street" => :yes,
+        "street" => :yes,
+        "track" => :yes,
+        "service" => :yes,
         "road" => :yes,
         "pedestrian" => :no,
         "path" => :yes,
@@ -200,6 +228,9 @@ const ACCESS_RESTRICTION = Dict(
         "unclassified" => :yes,
         "residential" => :yes,
         "living_street" => :yes,
+        "street" => :yes,
+        "track" => :yes,
+        "service" => :yes,
         "road" => :yes,
         "pedestrian" => :no,
         "path" => :yes,
@@ -221,6 +252,9 @@ const ACCESS_RESTRICTION = Dict(
         "unclassified" => :yes,
         "residential" => :yes,
         "living_street" => :yes,
+        "street" => :yes,
+        "track" => :yes,
+        "service" => :yes,
         "road" => :yes,
         "pedestrian" => :yes,
         "path" => :yes,
