@@ -61,3 +61,5 @@ function osmnetwork(osmdata::OSMData, access::Dict{String,Symbol}=ACCESS["all"])
 
     OSMNetwork(LightGraphs.DiGraph(distmx), osmdata, distmx, nodeid,wayids)
 end
+
+osmnetwork(osmdata::OSMData, access::String) = osmnetwork(osmdata, ACCESS[access])
