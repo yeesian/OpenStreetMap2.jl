@@ -12,14 +12,13 @@ end
 
 struct OSMData
     header::OSMPBF.HeaderBlock
-    nodeid::Dict{Int,Int} # osm_id -> node_id
-    nodes::OSMNodes # Vector{(osm_id, lon, lat) ... (osm_id, lon, lat)}
-    ways::Dict{Int,Vector{Int}} # osm_id -> way
+    nodes::OSMNodes
+    ways::Dict{Int,Vector{Int}} # osm_id -> way_refs
     relations::Dict{Int,Dict{String,Any}} # osm_id -> relations
     tags::Dict{Int,Dict{String,String}} # osm_id -> tags
 
     OSMData() = new(
-        OSMPBF.HeaderBlock(), Dict(), OSMNodes(), Dict(), Dict(), Dict()
+        OSMPBF.HeaderBlock(), OSMNodes(), Dict(), Dict(), Dict()
     )
 end
 

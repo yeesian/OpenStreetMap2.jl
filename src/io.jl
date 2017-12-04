@@ -62,9 +62,6 @@ function processblock!(osmdata::OSMData, pb::OSMPBF.PrimitiveBlock)
                 osmdata.tags[n.id][getstr(k)] = getstr(v)
             end
         end
-        merge!(osmdata.nodeid, Dict(zip(
-            osmdata.nodes.id, 1:length(osmdata.nodes.id)
-        )))
         # process ways
         for w in pg.ways
             osmdata.ways[w.id] = cumsum(w.refs)
