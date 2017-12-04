@@ -82,7 +82,7 @@ using Base.Test
             )
         end
 
-        @testset "Testing OSMNetwork" begin
+        @testset "Testing OSMNetwork (ALL)" begin
             network = OSM.osmnetwork(maldives_osm)
             numnodes = length(maldives_osm.nodes.id)
             
@@ -108,6 +108,67 @@ using Base.Test
                 @test sum(ds.dists[ds.dists .< Inf] .< 1) == 103
                 @test sum(ds.parents .!== 0) == 1201 # difference of 5
                 @test length(unique(ds.parents)) == 997
+
+                ds = OSM.shortestpath(network, [18854,41972,41956,18855,41864], 10.)
+                @test length(ds.dists) == numnodes
+                @test sum(ds.dists .< Inf) == 513
+                @test sum(ds.dists[ds.dists .< Inf] .< 5) == 405
+                @test sum(ds.dists[ds.dists .< Inf] .< 1) == 103
+
+                ds = OSM.shortestpath(network, [18854,41972,41956,18855,41864], 5.)
+                @test length(ds.dists) == numnodes
+                @test sum(ds.dists .< Inf) == 405
+                @test sum(ds.dists[ds.dists .< Inf] .< 1) == 103
+
+                ds = OSM.shortestpath(network, [18854,41972,41956,18855,41864], 1.)
+                @test length(ds.dists) == numnodes
+                @test sum(ds.dists .< Inf) == 103
+            end
+        end
+
+        @testset "Testing OSMNetwork (foot)" begin
+            network = OSM.osmnetwork(maldives_osm, "foot")
+            numnodes = length(maldives_osm.nodes.id)
+            
+            @testset "Testing Construction" begin
+                @test numnodes == 159046
+                @test sort(collect(values(network.nodeid)))==collect(1:numnodes)
+                @test length(network.wayids) == 5863
+                @test LG.nv(network.g) == numnodes
+                @test LG.ne(network.g) == 54891
+                @test isapprox(sum(network.distmx), 2615.4896)
+                scc = LG.strongly_connected_components(network.g)
+                @test length(scc) == 136250
+                @test sum(map(length, scc)) == 159046
+            end
+        end
+
+        @testset "Testing OSMNetwork (motorcar)" begin
+            network = OSM.osmnetwork(maldives_osm, "motorcar")
+            numnodes = length(maldives_osm.nodes.id)
+            
+            @testset "Testing Construction" begin
+                @test numnodes == 159046
+                @test sort(collect(values(network.nodeid)))==collect(1:numnodes)
+                @test length(network.wayids) == 4650
+                @test LG.nv(network.g) == numnodes
+                @test LG.ne(network.g) == 42229
+                @test isapprox(sum(network.distmx), 2234.8697)
+                scc = LG.strongly_connected_components(network.g)
+                @test length(scc) == 142078
+                @test sum(map(length, scc)) == 159046
+            end
+
+            @testset "Testing Routing" begin
+                ds = OSM.shortestpath(network, [18854,41972,41956,18855,41864])
+                @test length(ds.dists) == numnodes
+                @test isapprox(sum(ds.dists[ds.dists .< Inf]), 9458.2279)
+                @test sum(ds.dists .< Inf) == 1133
+                @test sum(ds.dists[ds.dists .< Inf] .< 10) == 513
+                @test sum(ds.dists[ds.dists .< Inf] .< 5) == 405
+                @test sum(ds.dists[ds.dists .< Inf] .< 1) == 103
+                @test sum(ds.parents .!== 0) == 1128 # difference of 5
+                @test length(unique(ds.parents)) == 928
 
                 ds = OSM.shortestpath(network, [18854,41972,41956,18855,41864], 10.)
                 @test length(ds.dists) == numnodes
