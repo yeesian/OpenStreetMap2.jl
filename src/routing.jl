@@ -10,7 +10,7 @@ function shortestpath!(
         ds::DijkstraState,
         threshold::Float64 = Inf
     )
-    fill!(ds.dists, typemax(Float64)); ds.dists[srcs] = zero(Float64)
+    fill!(ds.dists, Inf); ds.dists[srcs] = zero(Float64)
     fill!(ds.parents, 0)
     H = DataStructures.PriorityQueue{Int,Float64}()    
     for v in srcs; H[v] = ds.dists[v] end
@@ -43,6 +43,6 @@ function shortestpath(
         threshold::Float64 = Inf
     )
     parents = zeros(Int,LightGraphs.nv(network.g))
-    dists = fill(typemax(Float64),LightGraphs.nv(network.g))
+    dists = fill(Inf,LightGraphs.nv(network.g))
     shortestpath!(network, srcs, DijkstraState(parents,dists), threshold)
 end
