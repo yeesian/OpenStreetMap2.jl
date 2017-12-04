@@ -7,7 +7,8 @@ function shortestpath!(
         g::LightGraphs.DiGraph,
         srcs::Vector{Int},
         distmx::AbstractMatrix{Float64},
-        ds::DijkstraState
+        ds::DijkstraState,
+        threshold::Float64 = Inf
     )
     fill!(ds.dists, typemax(Float64)); ds.dists[srcs] = zero(Float64)
     fill!(ds.parents, 0)
@@ -18,7 +19,7 @@ function shortestpath!(
         @assert ds.dists[u] < Inf
         for v in LightGraphs.out_neighbors(g, u)
             distv = ds.dists[u] + distmx[u,v]
-            if distv < ds.dists[v]
+            if distv < min(threshold, ds.dists[v])
                 H[v] = ds.dists[v] = distv; ds.parents[v] = u
             end
         end
@@ -27,11 +28,21 @@ function shortestpath!(
     ds
 end
 
-shortestpath!(network::OSMNetwork, srcs::Vector{Int}, ds::DijkstraState) =
-    shortestpath!(network.g, srcs, network.distmx, ds)
+function shortestpath!(
+        network::OSMNetwork,
+        srcs::Vector{Int},
+        ds::DijkstraState,
+        threshold::Float64 = Inf
+    )
+    shortestpath!(network.g, srcs, network.distmx, ds, threshold)
+end
 
-function shortestpath(network::OSMNetwork, srcs::Vector{Int})
+function shortestpath(
+        network::OSMNetwork,
+        srcs::Vector{Int},
+        threshold::Float64 = Inf
+    )
     parents = zeros(Int,LightGraphs.nv(network.g))
     dists = fill(typemax(Float64),LightGraphs.nv(network.g))
-    shortestpath!(network.g, srcs, network.distmx, DijkstraState(parents,dists))
+    shortestpath!(network, srcs, DijkstraState(parents,dists), threshold)
 end

@@ -103,8 +103,26 @@ using Base.Test
                 @test length(ds.dists) == numnodes
                 @test isapprox(sum(ds.dists[ds.dists .< Inf]), 10588.9966)
                 @test sum(ds.dists .< Inf) == 1206
+                @test sum(ds.dists[ds.dists .< Inf] .< 10) == 513
+                @test sum(ds.dists[ds.dists .< Inf] .< 5) == 405
+                @test sum(ds.dists[ds.dists .< Inf] .< 1) == 103
                 @test sum(ds.parents .!== 0) == 1201 # difference of 5
                 @test length(unique(ds.parents)) == 997
+
+                ds = OSM.shortestpath(network, [18854,41972,41956,18855,41864], 10.)
+                @test length(ds.dists) == numnodes
+                @test sum(ds.dists .< Inf) == 513
+                @test sum(ds.dists[ds.dists .< Inf] .< 5) == 405
+                @test sum(ds.dists[ds.dists .< Inf] .< 1) == 103
+
+                ds = OSM.shortestpath(network, [18854,41972,41956,18855,41864], 5.)
+                @test length(ds.dists) == numnodes
+                @test sum(ds.dists .< Inf) == 405
+                @test sum(ds.dists[ds.dists .< Inf] .< 1) == 103
+
+                ds = OSM.shortestpath(network, [18854,41972,41956,18855,41864], 1.)
+                @test length(ds.dists) == numnodes
+                @test sum(ds.dists .< Inf) == 103
             end
         end
     end
