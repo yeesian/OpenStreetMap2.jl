@@ -26,6 +26,15 @@ function osmnetwork(osmdata::OSMData, access::Dict{String,Symbol}=ACCESS["all"])
                 highway == "motorway_link" ||
                 junction == "roundabout")
     end
+    "distance between the two points in kilometres"
+    function distance(n1::Int, n2::Int)
+        toradians(degree::Float64) = degree * π / 180.0
+        lat1 = osmdata.nodes.lat[n1]; lon1 = osmdata.nodes.lon[n1]
+        lat2 = osmdata.nodes.lat[n2]; lon2 = osmdata.nodes.lon[n2]
+        dlat = toradians(lat2 - lat1); dlon = toradians(lon2 - lon1)
+        a = sin(dlat/2)^2+sin(dlon/2)^2*cos(toradians(lat1))*cos(toradians(lat2))
+        2.0 * atan2(sqrt(a), sqrt(1-a)) * 6373.0
+    end
     
     wayids = filter(hasaccess, filter(ishighway, collect(keys(osmdata.ways))))
     numnodes = length(osmdata.nodes.id)
@@ -48,7 +57,7 @@ function osmnetwork(osmdata::OSMData, access::Dict{String,Symbol}=ACCESS["all"])
     edges = reinterpret(Int,collect(edgeset))
     I = edges[1:2:end] # collect all start nodes
     J = edges[2:2:end] # collect all end nodes
-    distmx = sparse(I, J, ones(length(I)), numnodes, numnodes)
+    distmx = sparse(I,J,[distance(i,j) for (i,j) in zip(I,J)],numnodes,numnodes)
 
     OSMNetwork(LightGraphs.DiGraph(distmx), osmdata, distmx, nodeid,wayids)
 end
