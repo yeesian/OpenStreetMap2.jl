@@ -1,4 +1,5 @@
 using OpenStreetMap2; const OSM = OpenStreetMap2
+using LightGraphs; const LG = LightGraphs
 using Base.Test
 
 @testset "Testing Maldives OSM" begin
@@ -79,6 +80,32 @@ using Base.Test
                 "natural" => "reef",
                 "type"    => "multipolygon"
             )
+        end
+
+        @testset "Testing OSMNetwork" begin
+            network = OSM.osmnetwork(maldives_osm)
+            numnodes = length(maldives_osm.nodes.id)
+            
+            @testset "Testing Construction" begin
+                @test numnodes == 159046
+                @test sort(collect(values(network.nodeid)))==collect(1:numnodes)
+                @test length(network.wayids) == 5869
+                @test LG.nv(network.g) == numnodes
+                @test LG.ne(network.g) == 55057
+                @test isapprox(sum(network.distmx), 2615.4896)
+                scc = LG.strongly_connected_components(network.g)
+                @test length(scc) == 136180
+                @test sum(map(length, scc)) == 159046
+            end
+
+            @testset "Testing Routing" begin
+                ds = OSM.shortestpath(network, [18854,41972,41956,18855,41864])
+                @test length(ds.dists) == numnodes
+                @test isapprox(sum(ds.dists[ds.dists .< Inf]), 10588.9966)
+                @test sum(ds.dists .< Inf) == 1206
+                @test sum(ds.parents .!== 0) == 1201 # difference of 5
+                @test length(unique(ds.parents)) == 997
+            end
         end
     end
 end
