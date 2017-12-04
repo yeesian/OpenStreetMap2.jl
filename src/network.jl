@@ -1,0 +1,54 @@
+struct OSMNetwork
+    g::LightGraphs.DiGraph
+    data::OSMData
+    distmx::SparseMatrixCSC{Float64, Int}
+    nodeid::Dict{Int,Int} # osm_id -> node_id
+    wayids::Vector{Int} # [osm_id, ... osm_id]
+    # edgeid::Dict{Tuple{Int,Int},Int}
+end
+
+function osmnetwork(osmdata::OSMData, access::Dict{String,Symbol}=ACCESS["all"])
+    tags(w::Int) = get(osmdata.tags, w, Dict{String,String}())
+    lookup(tags::Dict{String,String}, k::String) = get(tags, k, "")
+    hasaccess(w::Int) = get(access, lookup(tags(w),"highway"), :no) != :no
+    ishighway(w::Int) = haskey(tags(w), "highway")
+    isreverse(w::Int) = lookup(tags(w),"oneway") == "-1"
+    function isoneway(w::Int)
+        v = lookup(tags(w),"oneway")
+        if v == "false" || v == "no" || v == "0"
+            return false
+        elseif v == "-1" || v == "true" || v == "yes" || v == "1"
+            return true
+        end
+        highway = lookup(tags(w),"highway")
+        junction = lookup(tags(w),"junction")
+        return (highway == "motorway" ||
+                highway == "motorway_link" ||
+                junction == "roundabout")
+    end
+    
+    wayids = filter(hasaccess, filter(ishighway, collect(keys(osmdata.ways))))
+    numnodes = length(osmdata.nodes.id)
+    nodeid = Dict(zip(osmdata.nodes.id, 1:numnodes))
+
+    edgeset = Set{Tuple{Int,Int}}()
+    for w in wayids
+        way = osmdata.ways[w]
+        rev, nrev = isreverse(w), !isreverse(w)
+        for n in 2:length(osmdata.ways[w])
+            n0 = nodeid[way[n-1]] # map osm_id -> node_id
+            n1 = nodeid[way[n]]
+            startnode = n0*nrev + n1*rev # reverse the direction if need be
+            endnode = n0*rev + n1*nrev
+
+            push!(edgeset, (startnode, endnode))
+            isoneway(w) || push!(edgeset, (endnode, startnode))
+        end
+    end
+    edges = reinterpret(Int,collect(edgeset))
+    I = edges[1:2:end] # collect all start nodes
+    J = edges[2:2:end] # collect all end nodes
+    distmx = sparse(I, J, ones(length(I)), numnodes, numnodes)
+
+    OSMNetwork(LightGraphs.DiGraph(distmx), osmdata, distmx, nodeid,wayids)
+end
