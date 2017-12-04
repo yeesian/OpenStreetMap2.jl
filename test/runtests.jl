@@ -56,8 +56,6 @@ using Base.Test
         @testset "Testing Nodes" begin    
             @test length(maldives_osm.nodes.id) == length(maldives_osm.nodes.lon)
             @test length(maldives_osm.nodes.lon) == length(maldives_osm.nodes.lat)
-            @test [maldives_osm.nodeid[id] for id in maldives_osm.nodes.id] ==
-                collect(1:length(maldives_osm.nodes.id))
         end
 
         @testset "Testing Ways" begin
