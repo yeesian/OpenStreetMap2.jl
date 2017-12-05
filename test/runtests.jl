@@ -82,7 +82,7 @@ using Base.Test
             )
         end
 
-        @testset "Testing OSMNetwork (ALL)" begin
+        @testset "Testing OSMNetwork (all)" begin
             network = OSM.osmnetwork(maldives_osm)
             numnodes = length(maldives_osm.nodes.id)
             
