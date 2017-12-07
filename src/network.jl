@@ -3,6 +3,7 @@ struct OSMNetwork
     data::OSMData
     distmx::SparseMatrixCSC{Float64, Int}
     nodeid::Dict{Int,Int} # osm_id -> node_id
+    connectednodes::Vector{Int}
     wayids::Vector{Int} # [osm_id, ... osm_id]
     # edgeid::Dict{Tuple{Int,Int},Int}
 end
@@ -41,6 +42,7 @@ function osmnetwork(osmdata::OSMData, access::Dict{String,Symbol}=ACCESS["all"])
     nodeid = Dict(zip(osmdata.nodes.id, 1:numnodes))
 
     edgeset = Set{Tuple{Int,Int}}()
+    nodeset = Set{Int}()
     for w in wayids
         way = osmdata.ways[w]
         rev, nrev = isreverse(w), !isreverse(w)
@@ -50,16 +52,18 @@ function osmnetwork(osmdata::OSMData, access::Dict{String,Symbol}=ACCESS["all"])
             startnode = n0*nrev + n1*rev # reverse the direction if need be
             endnode = n0*rev + n1*nrev
 
+            push!(nodeset, n0); push!(nodeset, n1)
             push!(edgeset, (startnode, endnode))
             isoneway(w) || push!(edgeset, (endnode, startnode))
         end
     end
+    connectednodes = collect(nodeset)
     edges = reinterpret(Int,collect(edgeset))
     I = edges[1:2:end] # collect all start nodes
     J = edges[2:2:end] # collect all end nodes
     distmx = sparse(I,J,[distance(i,j) for (i,j) in zip(I,J)],numnodes,numnodes)
 
-    OSMNetwork(LightGraphs.DiGraph(distmx), osmdata, distmx, nodeid,wayids)
+    OSMNetwork(LightGraphs.DiGraph(distmx), osmdata, distmx, nodeid, connectednodes, wayids)
 end
 
 osmnetwork(osmdata::OSMData, access::String) = osmnetwork(osmdata, ACCESS[access])
