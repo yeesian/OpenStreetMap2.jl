@@ -21,10 +21,3 @@ struct OSMData
         OSMPBF.HeaderBlock(), OSMNodes(), Dict(), Dict(), Dict()
     )
 end
-
-struct RawOSMData
-    header::OSMPBF.HeaderBlock
-    primitives::Vector{OSMPBF.PrimitiveBlock}
-
-    RawOSMData() = new(OSMPBF.HeaderBlock(), [])
-end
