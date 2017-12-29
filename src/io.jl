@@ -16,13 +16,9 @@ function readblock!(blob::OSMPBF.Blob, block::OSMPBFFileBlock)
     end
 end
 
-function processblock!(osmdata::RawOSMData, pb::OSMPBF.PrimitiveBlock)
-    push!(osmdata.primitives, pb)
-end
-
 function processblock!(osmdata::OSMData, pb::OSMPBF.PrimitiveBlock)
     getstr(i) = transcode(String,pb.stringtable.s[i+1])
-    membertype(i) = if i == 0; :Node elseif i == 1; :Way else; :Relation end
+    membertype(i) = if i == 0; :node elseif i == 1; :way else; :relation end
     for pg in pb.primitivegroup
         # process dense
         if isdefined(pg, :dense)
@@ -87,7 +83,7 @@ end
 
 function readpbf(
         filename::String,
-        osmdata::Union{RawOSMData,OSMData} = RawOSMData();
+        osmdata::OSMData = OSMData();
         blobheader::OSMPBF.BlobHeader = OSMPBF.BlobHeader(),
         blob::OSMPBF.Blob = OSMPBF.Blob()
     )
@@ -103,3 +99,85 @@ function readpbf(
     end
     osmdata
 end
+
+function readxmlstream(
+        xmlstream::IO,
+        osmdata::OSMData = OSMData()
+    )
+    currentelement = ""
+    currentid = 0
+    reader = EzXML.StreamReader(xmlstream)
+    for typ in reader
+        if typ == EzXML.READER_ELEMENT
+            elname = EzXML.nodename(reader)
+            if elname == "bounds"
+                warn("we currently do not handle element: $elname")
+            elseif elname == "member"
+                @assert currentelement == "relation"
+                push!(osmdata.relations[currentid]["role"], reader["role"])
+                push!(osmdata.relations[currentid]["id"], parse(Int,reader["ref"]))
+                push!(osmdata.relations[currentid]["type"], Symbol(reader["type"]))
+            elseif elname == "nd"
+                @assert currentelement == "way"
+                push!(osmdata.ways[currentid], parse(Int,reader["ref"]))
+            elseif elname == "node"
+                currentelement = "node"
+                currentid = parse(Int,reader["id"])
+                push!(osmdata.nodes.id, parse(Int,reader["id"]))
+                push!(osmdata.nodes.lat, parse(Float64, reader["lat"]))
+                push!(osmdata.nodes.lon, parse(Float64, reader["lon"]))
+            elseif elname == "osm"
+                warn("we currently do not handle element: $elname")
+            elseif elname == "relation"
+                currentelement = "relation"
+                currentid = parse(Int,reader["id"])
+                osmdata.relations[currentid] = Dict{String,Any}(
+                    "role" => Any[],
+                    "id" => Int[],
+                    "type" => Symbol[]
+                )
+            elseif elname == "tag"
+                osmdata.tags[currentid] = get(osmdata.tags,currentid,Dict())
+                osmdata.tags[currentid][reader["k"]] = reader["v"]
+            elseif elname == "way"
+                currentelement = "way"
+                currentid = parse(Int,reader["id"])
+                osmdata.ways[currentid] = Int[]
+            else
+                warn("unrecognized element: $elname")
+            end
+        end
+    end
+    close(reader)
+    osmdata
+end
+
+readxmlfile(filename::String, osmdata::OSMData = OSMData()) =
+    readxmlstream(open(filename, "r"), osmdata)
+
+"Returns the overpass query within `bounds`"
+function overpassquery(bounds::String; timeout::Int = 25)
+    result = Requests.get(
+        "https://overpass-api.de/api/interpreter",
+        query = Dict("data" => """
+        [out:xml][timeout:$timeout];
+        (
+          node($bounds);
+          way($bounds);
+          relation($bounds);
+        );
+        out body;
+        >;
+        out skel qt;
+        """)
+    )
+    readxmlstream(IOBuffer(result.data))
+end
+
+"Returns the overpass query with `bbox = (minlon, minlat, maxlon, maxlat)`"
+overpassquery(bbox::NTuple{4,Float64}; kwargs...) =
+    overpassquery("$(bbox[1]),$(bbox[2]),$(bbox[3]),$(bbox[4])", kwargs...)
+
+"Returns the overpass query within a `radius` (in meters) around `lonlat`"
+overpassquery(lonlat::Tuple{Float64,Float64}, radius::Real; kwargs...) =
+    overpassquery("around:$radius,$(lonlat[1]),$(lonlat[2])", kwargs...)

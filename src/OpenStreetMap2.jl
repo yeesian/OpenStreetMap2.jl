@@ -1,6 +1,6 @@
 module OpenStreetMap2
 
-    import ProtoBuf, CodecZlib, LightGraphs, DataStructures
+    import ProtoBuf, EzXML, CodecZlib, Requests, LightGraphs, DataStructures
 
     include("types.jl")
     include("io.jl")
