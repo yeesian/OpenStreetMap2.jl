@@ -1,3 +1,6 @@
+
+__precompile__()
+
 module OpenStreetMap2
 
     import ProtoBuf, EzXML, CodecZlib, Requests, LightGraphs, DataStructures
