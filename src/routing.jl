@@ -17,7 +17,7 @@ function shortestpath!(
     while !isempty(H)
         u, _ = DataStructures.dequeue_pair!(H)
         @assert ds.dists[u] < Inf
-        for v in LightGraphs.out_neighbors(g, u)
+        for v in LightGraphs.outneighbors(g, u)
             distv = ds.dists[u] + distmx[u,v]
             if distv < min(threshold, ds.dists[v])
                 H[v] = ds.dists[v] = distv; ds.parents[v] = u
