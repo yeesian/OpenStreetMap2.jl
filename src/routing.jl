@@ -10,7 +10,7 @@ function shortestpath!(
         ds::DijkstraState,
         threshold::Float64 = Inf
     )
-    fill!(ds.dists, Inf); ds.dists[srcs] = zero(Float64)
+    fill!(ds.dists, Inf); ds.dists[srcs] .= zero(Float64)
     fill!(ds.parents, 0)
     H = DataStructures.PriorityQueue{Int,Float64}()    
     for v in srcs; H[v] = ds.dists[v] end

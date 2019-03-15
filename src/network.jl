@@ -1,7 +1,7 @@
 struct OSMNetwork
     g::LightGraphs.DiGraph
     data::OSMData
-    distmx::SparseMatrixCSC{Float64, Int}
+    distmx::SparseArrays.SparseMatrixCSC{Float64, Int}
     nodeid::Dict{Int,Int} # osm_id -> node_id
     connectednodes::Vector{Int}
     wayids::Vector{Int} # [osm_id, ... osm_id]
@@ -34,7 +34,7 @@ function osmnetwork(osmdata::OSMData, access::Dict{String,Symbol}=ACCESS["all"])
         lat2 = osmdata.nodes.lat[n2]; lon2 = osmdata.nodes.lon[n2]
         dlat = toradians(lat2 - lat1); dlon = toradians(lon2 - lon1)
         a = sin(dlat/2)^2+sin(dlon/2)^2*cos(toradians(lat1))*cos(toradians(lat2))
-        2.0 * atan2(sqrt(a), sqrt(1-a)) * 6373.0
+        2.0 * atan(sqrt(a), sqrt(1-a)) * 6373.0
     end
     
     wayids = filter(hasaccess, filter(ishighway, collect(keys(osmdata.ways))))
@@ -61,7 +61,8 @@ function osmnetwork(osmdata::OSMData, access::Dict{String,Symbol}=ACCESS["all"])
     edges = reinterpret(Int,collect(edgeset))
     I = edges[1:2:end] # collect all start nodes
     J = edges[2:2:end] # collect all end nodes
-    distmx = sparse(I,J,[distance(i,j) for (i,j) in zip(I,J)],numnodes,numnodes)
+    distances = [distance(i,j) for (i,j) in zip(I,J)]
+    distmx = SparseArrays.sparse(I, J, distances, numnodes, numnodes)
 
     OSMNetwork(LightGraphs.DiGraph(distmx), osmdata, distmx, nodeid, connectednodes, wayids)
 end

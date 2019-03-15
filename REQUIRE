@@ -1,7 +1,7 @@
-julia 0.6
+julia 0.7
 ProtoBuf
 CodecZlib
 LightGraphs
 DataStructures
 EzXML
-Requests
+HTTP
