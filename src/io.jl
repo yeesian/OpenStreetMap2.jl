@@ -17,7 +17,7 @@ function readblock!(blob::OSMPBF.Blob, block::OSMPBFFileBlock)
 end
 
 function processblock!(osmdata::OSMData, pb::OSMPBF.PrimitiveBlock)
-    getstr(i) = transcode(String,pb.stringtable.s[i+1])
+    getstr = Base.transcode.(String, pb.stringtable.s)
     membertype(i) = if i == 0; :node elseif i == 1; :way else; :relation end
     for pg in pb.primitivegroup
         # process dense
@@ -41,7 +41,7 @@ function processblock!(osmdata::OSMData, pb::OSMPBF.PrimitiveBlock)
                         v = pg.dense.keys_vals[j+1]
                         id = osmids[i]
                         osmdata.tags[id] = get(osmdata.tags, id, Dict())
-                        osmdata.tags[id][getstr(k)] = getstr(v)
+                        osmdata.tags[id][getstr[k+1]] = getstr[v+1]
                         j += 2
                     end
                 end
@@ -55,7 +55,7 @@ function processblock!(osmdata::OSMData, pb::OSMPBF.PrimitiveBlock)
             @assert length(n.keys) == length(n.vals)
             osmdata.tags[n.id] = get(osmdata.tags, n.id, Dict())
             for (k,v) in zip(n.keys, n.vals)
-                osmdata.tags[n.id][getstr(k)] = getstr(v)
+                osmdata.tags[n.id][getstr[k+1]] = getstr[v+1]
             end
         end
         # process ways
@@ -63,7 +63,7 @@ function processblock!(osmdata::OSMData, pb::OSMPBF.PrimitiveBlock)
             osmdata.ways[w.id] = cumsum(w.refs)
             osmdata.tags[w.id] = get(osmdata.tags, w.id, Dict())
             for (k,v) in zip(w.keys, w.vals)
-                osmdata.tags[w.id][getstr(k)] = getstr(v)
+                osmdata.tags[w.id][getstr[k+1]] = getstr[v+1]
             end
         end
         # process relations
@@ -71,11 +71,11 @@ function processblock!(osmdata::OSMData, pb::OSMPBF.PrimitiveBlock)
             osmdata.relations[r.id] = Dict(
                 "id" => cumsum(r.memids),
                 "type" => membertype.(r.types),
-                "role" => getstr.(r.roles_sid)
+                "role" => getstr[r.roles_sid .+ 1]
             )
             osmdata.tags[r.id] = get(osmdata.tags, r.id, Dict())
             for (k,v) in zip(r.keys, r.vals)
-                osmdata.tags[r.id][getstr(k)] = getstr(v)
+                osmdata.tags[r.id][getstr[k+1]] = getstr[v+1]
             end
         end
     end
@@ -111,7 +111,7 @@ function readxmlstream(
         if typ == EzXML.READER_ELEMENT
             elname = EzXML.nodename(reader)
             if elname == "bounds"
-                warn("we currently do not handle element: $elname")
+                @warn("we currently do not handle element: $elname")
             elseif elname == "member"
                 @assert currentelement == "relation"
                 push!(osmdata.relations[currentid]["role"], reader["role"])
@@ -127,7 +127,7 @@ function readxmlstream(
                 push!(osmdata.nodes.lat, parse(Float64, reader["lat"]))
                 push!(osmdata.nodes.lon, parse(Float64, reader["lon"]))
             elseif elname == "osm"
-                warn("we currently do not handle element: $elname")
+                @warn("we currently do not handle element: $elname")
             elseif elname == "relation"
                 currentelement = "relation"
                 currentid = parse(Int,reader["id"])
@@ -144,7 +144,7 @@ function readxmlstream(
                 currentid = parse(Int,reader["id"])
                 osmdata.ways[currentid] = Int[]
             else
-                warn("unrecognized element: $elname")
+                @warn("unrecognized element: $elname")
             end
         end
     end
@@ -157,7 +157,7 @@ readxmlfile(filename::String, osmdata::OSMData = OSMData()) =
 
 "Returns the overpass query within `bounds`"
 function overpassquery(bounds::String; timeout::Int = 25)
-    result = Requests.get(
+    result = HTTP.request("GET",
         "https://overpass-api.de/api/interpreter",
         query = Dict("data" => """
         [out:xml][timeout:$timeout];
@@ -171,7 +171,7 @@ function overpassquery(bounds::String; timeout::Int = 25)
         out skel qt;
         """)
     )
-    readxmlstream(IOBuffer(result.data))
+    readxmlstream(IOBuffer(result.body))
 end
 
 "Returns the overpass query with `bbox = (minlon, minlat, maxlon, maxlat)`"

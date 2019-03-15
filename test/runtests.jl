@@ -1,6 +1,6 @@
 using OpenStreetMap2; const OSM = OpenStreetMap2
 using LightGraphs; const LG = LightGraphs
-using Base.Test
+using Test
 
 @testset "Testing Maldives OSM PBF" begin
         
